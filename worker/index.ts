@@ -5,7 +5,7 @@
 //   MAIL_TO   (optional)     – Empfänger der Zentrale, Standard info@metropol-bz.de
 import kundeHtml from '../mail-templates/kunde.html'
 import zentraleHtml from '../mail-templates/zentrale.html'
-import { buildRow, type Lead } from '../shared/leadRow'
+import { buildRow, makeRequestId, type Lead } from '../shared/leadRow'
 
 interface Env {
   ASSETS: { fetch(r: Request): Promise<Response> }
@@ -72,7 +72,8 @@ export async function handleLead(req: Request, env: Env): Promise<Response> {
   const url = env.SUPABASE_URL || DEFAULT_URL
   const key = env.SUPABASE_ANON_KEY || DEFAULT_KEY
   const campaign = env.CAMPAIGN || 'messe_2026'
-  const { name, course, pay, message, row } = buildRow(lead, campaign)
+  const requestId = makeRequestId()
+  const { name, course, pay, message, row } = buildRow(lead, campaign, requestId)
 
   const ins = await fetch(`${url}/rest/v1/contact_requests`, {
     method: 'POST',
@@ -85,7 +86,7 @@ export async function handleLead(req: Request, env: Env): Promise<Response> {
   if (env.RESEND_API_KEY) {
     const to = env.MAIL_TO || 'info@metropol-bz.de'
     const vars: Record<string, string> = {
-      vorname: lead.firstName, name, anrede: lead.salutation, ausbildung: course, bezahlung: pay,
+      anfrageid: requestId, vorname: lead.firstName, name, anrede: lead.salutation, ausbildung: course, bezahlung: pay,
       handy: lead.mobile || '–', telefon: lead.phone || '–', email: lead.email, bausteine: lead.modules.join(', ') || '–',
       geburtstag: lead.birthDate ? lead.birthDate.split('-').reverse().join('.') : '–', geburtsort: lead.birthPlace || '–',
       nationalitaet: lead.nationality || '–', familienstand: lead.maritalStatus || '–',
@@ -95,8 +96,8 @@ export async function handleLead(req: Request, env: Env): Promise<Response> {
     }
     mail.via = 'resend'
     try {
-      mail.zentrale = await sendMail(env, to, `Neue Messe-Anfrage: ${name} · ${course}`, render(zentraleHtml, vars), lead.email)
-      mail.kunde = await sendMail(env, lead.email, 'Deine Anfrage beim METROPOL Bildungszentrum', render(kundeHtml, vars), to)
+      mail.zentrale = await sendMail(env, to, `Neue Messe-Anfrage ${requestId}: ${name} · ${course}`, render(zentraleHtml, vars), lead.email)
+      mail.kunde = await sendMail(env, lead.email, `Deine Anfrage beim METROPOL Bildungszentrum (${requestId})`, render(kundeHtml, vars), to)
     } catch { /* Lead ist gespeichert */ }
   } else {
     // Ohne Resend-Key: bestehende Benachrichtigung der Hauptseite
@@ -110,7 +111,7 @@ export async function handleLead(req: Request, env: Env): Promise<Response> {
       mail.zentrale = mail.kunde = r.ok
     } catch { /* ignore */ }
   }
-  return json({ ok: true, mail })
+  return json({ ok: true, id: requestId, mail })
 }
 
 export default {

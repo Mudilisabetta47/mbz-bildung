@@ -1,5 +1,5 @@
 import { BACKEND } from './backend'
-import { buildRow, SOURCE, type Lead } from '../../shared/leadRow'
+import { buildRow, makeRequestId, SOURCE, type Lead } from '../../shared/leadRow'
 
 export type { Lead }
 
@@ -16,8 +16,9 @@ async function post(url: string, body: unknown, headers: Record<string, string>,
 }
 
 /** Direkt-Weg wie das Kontaktformular von metropol-bz.de (lokale Entwicklung bzw. falls /api/lead nicht erreichbar ist). */
-async function direct(l: Lead) {
-  const { row, name, course, message } = buildRow(l, CAMPAIGN)
+async function direct(l: Lead): Promise<string> {
+  const id = makeRequestId()
+  const { row, name, course, message } = buildRow(l, CAMPAIGN, id)
   const h = { apikey: BACKEND.key, Authorization: `Bearer ${BACKEND.key}` }
   let res: Response | undefined
   for (let attempt = 0; attempt < 2 && !res?.ok; attempt++) {
@@ -30,20 +31,24 @@ async function direct(l: Lead) {
   try {
     await post(`${BACKEND.url}/functions/v1/send-contact-notification`, { name, email: row.email, phone: row.phone ?? undefined, course, location: row.location_preference ?? undefined, message, source: SOURCE }, h, 8000)
   } catch { /* Lead ist gespeichert */ }
+  return id
 }
 
 /**
  * Sendet die Anfrage an den eigenen Endpunkt `/api/lead` (Worker): speichert in `contact_requests`
  * (source = "messe", utm_campaign = "messe_2026") und verschickt die Mails (Resend, sonst bestehende Funktion).
  */
-export async function submitLead(l: Lead): Promise<void> {
+export async function submitLead(l: Lead): Promise<string> {
   let res: Response | undefined
   try {
     res = await post('/api/lead', l, {})
   } catch {
     res = undefined
   }
-  if (res?.ok) return
+  if (res?.ok) {
+    const j = (await res.json().catch(() => ({}))) as { id?: string }
+    return j.id ?? ''
+  }
   if (res && res.status !== 404 && res.status < 500) throw new Error(`lead_rejected:${res.status}`)
   if (res?.status === 502) throw new Error('lead_insert_failed:502')
   // Endpunkt nicht vorhanden (Dev) oder nicht erreichbar → direkter Weg

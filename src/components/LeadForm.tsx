@@ -30,7 +30,10 @@ type Errors = Partial<Record<keyof Data | 'consent' | 'pay' | 'track' | 'path' |
 const SALUTATIONS = ['Herr', 'Frau', 'Divers']
 const MARITAL = ['ledig', 'verheiratet', 'geschieden', 'verwitwet', 'eingetragene Lebenspartnerschaft']
 const HEARD = ['Messe', 'Empfehlung', 'Internet', 'Social Media', 'Agentur für Arbeit', 'Sonstiges']
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/
+const onlyPhone = (v: string) => v.replace(/[^\d+\-()/\s]/g, '')
+const onlyDigits = (v: string) => v.replace(/\D/g, '')
+const noSpaces = (v: string) => v.replace(/\s/g, '')
 const phoneOk = (v: string) => v.replace(/\D/g, '').length >= 6
 
 export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
@@ -45,6 +48,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
   const [errors, setErrors] = useState<Errors>({})
   const [status, setStatus] = useState<'idle' | 'sending' | 'error' | 'done'>('idle')
   const [hp, setHp] = useState('')
+  const [requestId, setRequestId] = useState('')
   const started = useRef(false)
   const sent = useRef(false)
   const root = useRef<HTMLDivElement>(null)
@@ -83,8 +87,8 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     }
     if (step === 'contact') {
       if (!EMAIL_RE.test(d.email.trim())) e.email = 'Bitte gib eine gültige E-Mail-Adresse ein.'
-      if (d.mobile.trim() && !phoneOk(d.mobile)) e.mobile = 'Diese Nummer scheint zu kurz zu sein.'
-      if (d.phone.trim() && !phoneOk(d.phone)) e.phone = 'Diese Nummer scheint zu kurz zu sein.'
+      if (d.mobile.trim() && !phoneOk(d.mobile)) e.mobile = 'Bitte gib eine gültige Nummer ein (nur Ziffern).'
+      if (d.phone.trim() && !phoneOk(d.phone)) e.phone = 'Bitte gib eine gültige Nummer ein (nur Ziffern).'
       if (!d.mobile.trim() && !d.phone.trim()) e.mobile = 'Bitte gib Handy- oder Telefonnummer an.'
       if (d.zip.trim() && !/^\d{5}$/.test(d.zip.trim())) e.zip = 'PLZ mit 5 Ziffern.'
     }
@@ -127,8 +131,9 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     setStatus('sending')
     track('lead_submitted', { course: tr.id, pay })
     try {
-      await submitLead({ ...d, payMode: pay, payer: pay === 'Kostenübernahme' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
-      track('lead_success', { course: tr.id, pay })
+      const id = await submitLead({ ...d, payMode: pay, payer: pay === 'Kostenübernahme' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
+      setRequestId(id)
+      track('lead_success', { course: tr.id, pay, request_id: id })
       setStatus('done')
       requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     } catch (err) {
@@ -140,7 +145,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
 
   const reset = () => {
     setStepIdx(0); setPay(''); setTrackId(''); setPathId(''); setModules([]); setD(EMPTY)
-    setConsent(false); setStatus('idle'); setErrors({}); sent.current = false; started.current = false
+    setRequestId(''); setConsent(false); setStatus('idle'); setErrors({}); sent.current = false; started.current = false
   }
 
   // Einfach-Auswahl springt nach kurzem Moment weiter (Rückweg bleibt über "Zurück")
@@ -154,10 +159,10 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     if (e.key === 'Enter' && t !== 'TEXTAREA' && t !== 'BUTTON') { e.preventDefault(); next() }
   }
 
-  const field = (k: keyof Data, lbl: string, props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  const field = (k: keyof Data, lbl: string, props: React.InputHTMLAttributes<HTMLInputElement>, clean?: (v: string) => string) => (
     <div className="field">
       <label htmlFor={`f-${k}`}>{lbl}</label>
-      <input id={`f-${k}`} className="input" value={d[k]} onChange={(e) => set(k, e.target.value)}
+      <input id={`f-${k}`} className="input" value={d[k]} onChange={(e) => set(k, clean ? clean(e.target.value) : e.target.value)}
         aria-invalid={!!errors[k]} aria-describedby={errors[k] ? `e-${k}` : undefined} {...props} />
       {errors[k] && <p className="err" id={`e-${k}`} role="alert">{errors[k]}</p>}
     </div>
@@ -182,11 +187,15 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
           </m.p>
           {tr && (
             <m.div className="picked" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.25, duration: 0.7, ease: EASE }}>
-              <div><small>Deine Anfrage</small><b>{tr.name}</b><span>{[pathLabel, pay].filter(Boolean).join(' · ')}</span></div>
+              <div>
+                <small>Deine Anfrage</small>
+                <b>{tr.name}</b>
+                <span>{[pathLabel, pay].filter(Boolean).join(' · ')}</span>
+                {requestId && <span className="rid">Anfrage-ID: <strong>{requestId}</strong></span>}
+              </div>
             </m.div>
           )}
           <div className="nav">
-            <a className="btn btn-ghost" href={TEL}>Lieber direkt anrufen</a>
             <button className="btn btn-primary" onClick={reset}>Neue Anfrage</button>
           </div>
         </m.div>
@@ -302,13 +311,13 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
           {step === 'contact' && (
             <div className="fields">
               <div className="fields two">
-                {field('mobile', 'Handy', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', enterKeyHint: 'next', autoFocus: true })}
-                {field('phone', 'Telefon (optional)', { type: 'tel', inputMode: 'tel', autoComplete: 'tel-national', enterKeyHint: 'next' })}
+                {field('mobile', 'Handy', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', enterKeyHint: 'next', autoFocus: true, maxLength: 20 }, onlyPhone)}
+                {field('phone', 'Telefon (optional)', { type: 'tel', inputMode: 'tel', autoComplete: 'tel-national', enterKeyHint: 'next', maxLength: 20 }, onlyPhone)}
               </div>
-              {field('email', 'E-Mail', { type: 'email', inputMode: 'email', autoComplete: 'email', autoCapitalize: 'none', spellCheck: false, enterKeyHint: 'next' })}
+              {field('email', 'E-Mail', { type: 'email', inputMode: 'email', autoComplete: 'email', autoCapitalize: 'none', spellCheck: false, enterKeyHint: 'next', maxLength: 120 }, noSpaces)}
               {field('street', 'Straße, Hausnummer (optional)', { autoComplete: 'street-address', autoCapitalize: 'words' })}
               <div className="fields zip">
-                {field('zip', 'PLZ', { inputMode: 'numeric', autoComplete: 'postal-code', maxLength: 5 })}
+                {field('zip', 'PLZ', { inputMode: 'numeric', autoComplete: 'postal-code', maxLength: 5 }, onlyDigits)}
                 {field('city', 'Ort', { autoComplete: 'address-level2', autoCapitalize: 'words' })}
               </div>
               <div className="field">

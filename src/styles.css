@@ -320,3 +320,6 @@ noscript { display: block; padding: 24px; text-align: center; }
 .needs { margin-top: 16px; padding: 18px 20px; border-radius: 18px; background: var(--bg2); }
 .needs h4 { font-size: .75rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin-bottom: 12px; font-weight: 700; }
 .needs .start { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-weight: 600; font-size: .92rem; }
+
+.rid { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,204,54,.3); color: var(--text); }
+.rid strong { letter-spacing: .06em; font-size: 1.05rem; color: var(--accent-d); }

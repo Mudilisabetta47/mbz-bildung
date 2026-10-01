@@ -25,13 +25,22 @@ export interface Lead {
 
 export const SOURCE = 'messe'
 
+/** Gut lesbare Anfrage-ID, z. B. M26-K7P3QX (ohne verwechselbare Zeichen wie 0/O, 1/I). */
+export function makeRequestId(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const bytes = new Uint8Array(6)
+  crypto.getRandomValues(bytes)
+  return 'M26-' + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('')
+}
+
 const de = (d: string) => (d ? d.split('-').reverse().join('.') : '')
 
-export function buildRow(l: Lead, campaign: string) {
+export function buildRow(l: Lead, campaign: string, requestId: string) {
   const name = `${l.firstName.trim()} ${l.lastName.trim()}`
   const course = l.path ? `${l.track} (${l.path})` : l.track
   const pay = l.payMode + (l.payer ? ` (${l.payer})` : '')
   const lines: [string, string][] = [
+    ['Anfrage-ID', requestId],
     ['Kostenpunkt', pay],
     ['Ausbildung', course],
     ['Bausteine', l.modules.join(', ')],
