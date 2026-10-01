@@ -40,7 +40,7 @@ GA4 läuft im Consent Mode v2 (`denied`, cookielos). Für Marketing-Cookies zus�
 
 ## Deployment (Subdomain)
 
-Cloudflare Pages (empfohlen, DNS liegt dort): Repo verbinden, Build `npm run build`, Ausgabe `dist`, Variable `NODE_VERSION=22`, Custom Domain `messe.metropol-bz.de`. Alternativ jedes statische Hosting. Build-Befehl `npm run build`, Ausgabe `dist`.
+Cloudflare (DNS liegt dort): Repo verbinden, Build-Befehl `npm run build`, Bereitstellungsbefehl `npx wrangler deploy` (Konfiguration in `wrangler.jsonc`), Custom Domain `messe.metropol-bz.de`. Alternativ jedes statische Hosting. Build-Befehl `npm run build`, Ausgabe `dist`.
 SPA-Fallback auf `index.html`. `noindex` ist gesetzt (Meta, `robots.txt`, `X-Robots-Tag` in `_headers`/`vercel.json`).
 DNS: CNAME der Subdomain (z. B. `messe`) auf das Hosting-Ziel; HTTPS stellt das Hosting automatisch aus.
 Die Hauptdomain wird nicht angefasst.
