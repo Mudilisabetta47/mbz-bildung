@@ -105,10 +105,3 @@ export async function fetchLiveCourses(signal?: AbortSignal): Promise<Course[] |
     return null
   }
 }
-
-export const LOCATIONS = [
-  { value: 'Hannover', label: 'Hannover', sub: 'Vahrenwalder Str. 213' },
-  { value: 'Bremen', label: 'Bremen', sub: 'Bahnhofsplatz 41' },
-  { value: 'Garbsen', label: 'Garbsen', sub: 'Planetenring 25–27' },
-  { value: 'Flexibel / Alle Standorte', label: 'Egal', sub: 'Flexibel' },
-]

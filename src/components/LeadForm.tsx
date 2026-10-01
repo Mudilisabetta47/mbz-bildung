@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, m } from 'framer-motion'
-import { CATEGORIES, LOCATIONS, type CategoryId, type Course } from '../lib/catalog'
+import { CATEGORIES, type CategoryId, type Course } from '../lib/catalog'
 import { submitLead } from '../lib/lead'
 import { track } from '../lib/track'
 import { Arrow, EASE } from './ui'
@@ -15,7 +15,7 @@ interface Data {
 }
 const EMPTY: Data = {
   salutation: '', firstName: '', lastName: '', birthDate: '', birthPlace: '', nationality: '', maritalStatus: '',
-  street: '', zip: '', city: '', phone: '', mobile: '', email: '', location: '', heardFrom: 'Messe', message: '',
+  street: '', zip: '', city: '', phone: '', mobile: '', email: '', location: 'Hannover', heardFrom: 'Messe', message: '',
 }
 const SALUTATIONS = ['Herr', 'Frau', 'Divers']
 const MARITAL = ['ledig', 'verheiratet', 'geschieden', 'verwitwet', 'eingetragene Lebenspartnerschaft']
@@ -42,7 +42,6 @@ function validate(step: number, d: Data, course: Course | undefined, consent: bo
     if (d.phone.trim() && !phoneOk(d.phone)) e.phone = 'Diese Nummer scheint zu kurz zu sein.'
     if (!d.mobile.trim() && !d.phone.trim()) e.mobile = 'Bitte gib Handy- oder Telefonnummer an.'
     if (d.zip.trim() && !/^\d{5}$/.test(d.zip.trim())) e.zip = 'PLZ mit 5 Ziffern.'
-    if (!d.location) e.location = 'Bitte wähle einen Standort.'
   }
   if (step === 3 && !consent) e.consent = 'Bitte stimme der Datenverarbeitung zu.'
   return e
@@ -292,17 +291,6 @@ export function LeadForm({
                 {field('city', 'Ort', { autoComplete: 'address-level2', autoCapitalize: 'words' })}
               </div>
               <div className="field">
-                <label id="loc-l">Bevorzugter Standort</label>
-                <div className="locs" role="radiogroup" aria-labelledby="loc-l">
-                  {LOCATIONS.map((l) => (
-                    <button key={l.value} role="radio" aria-checked={d.location === l.value} className="loc" onClick={() => set('location', l.value)}>
-                      <b>{l.label}</b><small>{l.sub}</small>
-                    </button>
-                  ))}
-                </div>
-                {errors.location && <p className="err" role="alert">{errors.location}</p>}
-              </div>
-              <div className="field">
                 <label id="heard-l">Aufmerksam geworden durch</label>
                 <div className="pick-cats" role="radiogroup" aria-labelledby="heard-l" style={{ marginBottom: 0 }}>
                   {HEARD.map((x) => (
@@ -321,7 +309,7 @@ export function LeadForm({
                 <div><dt>E-Mail</dt><dd>{d.email}</dd></div>
                 {(d.mobile || d.phone) && <div><dt>Telefon</dt><dd>{d.mobile || d.phone}</dd></div>}
                 {(d.street || d.city) && <div><dt>Adresse</dt><dd>{[d.street, [d.zip, d.city].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</dd></div>}
-                <div><dt>Standort</dt><dd>{d.location}</dd></div>
+                <div><dt>Standort</dt><dd>Hannover</dd></div>
               </dl>
               <div className="field">
                 <label htmlFor="f-message">Nachricht (optional)</label>
