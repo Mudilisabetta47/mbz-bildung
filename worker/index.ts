@@ -116,6 +116,10 @@ export async function handleLead(req: Request, env: Env): Promise<Response> {
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(req.url)
+    if (pathname === '/api/health') {
+      // Diagnose: nur Namen der gesetzten Variablen, keine Werte
+      return json({ ok: true, env: Object.keys(env).map((k) => JSON.stringify(k)), resend: Boolean(env.RESEND_API_KEY) })
+    }
     if (pathname === '/api/lead') {
       if (req.method !== 'POST') return json({ ok: false, error: 'method' }, 405)
       return handleLead(req, env)
