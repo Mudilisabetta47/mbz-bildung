@@ -82,7 +82,7 @@ export const Close = () => (
   </svg>
 )
 
-const ic = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
+export const ic = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true }
 export const CatIcon = ({ id }: { id: string }) => {
   switch (id) {
     case 'lkw':
@@ -96,4 +96,9 @@ export const CatIcon = ({ id }: { id: string }) => {
     default:
       return (<svg {...ic}><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" /></svg>)
   }
+}
+export const TrackIcon = ({ id }: { id: string }) => {
+  if (id === 'auslieferung') return (<svg {...ic}><path d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5zM3 7.5L12 12l9-4.5M12 12v9" /></svg>)
+  if (id === 'citylogistik') return (<svg {...ic}><path d="M4 21V9l6-3v15M10 21V4l10 4v13M2 21h20M13 11h4M13 15h4" /></svg>)
+  return <CatIcon id={id} />
 }

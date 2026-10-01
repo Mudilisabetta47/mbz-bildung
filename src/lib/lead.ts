@@ -1,6 +1,11 @@
-import { BACKEND } from './catalog'
+import { BACKEND } from './backend'
 
 export interface Lead {
+  payMode: string
+  payer: string
+  track: string
+  path: string
+  modules: string[]
   salutation: string
   firstName: string
   lastName: string
@@ -15,8 +20,6 @@ export interface Lead {
   mobile: string
   email: string
   heardFrom: string
-  category: string
-  course: string
   location: string
   message: string
 }
@@ -43,13 +46,17 @@ async function post(url: string, body: unknown, extra: Record<string, string> = 
 /**
  * Überträgt die Anfrage in dieselbe Tabelle (`contact_requests`) wie das Kontaktformular von metropol-bz.de,
  * damit sie im Admin-System unter "Kontakte" erscheint. `source`/`utm_*` kennzeichnen die Messe.
- * Anschließend wird – wie auf der Hauptseite – die Benachrichtigungs-Mail ausgelöst (Fehler dort sind nicht kritisch).
+ * Fragebogen- und Formularfelder ohne eigene Spalte stehen strukturiert in `message`.
+ * Danach wird wie auf der Hauptseite die Benachrichtigungs-Mail ausgelöst (Fehler dort sind nicht kritisch).
  */
 export async function submitLead(l: Lead): Promise<void> {
   const name = `${l.firstName.trim()} ${l.lastName.trim()}`
   const de = (d: string) => (d ? d.split('-').reverse().join('.') : '')
-  // Felder des Papierformulars "Datenerfassung – Teilnehmer"; contact_requests hat dafür keine Spalten
+  const course = l.path ? `${l.track} (${l.path})` : l.track
   const lines: [string, string][] = [
+    ['Kostenträger', l.payMode + (l.payer ? ` (${l.payer})` : '')],
+    ['Ausbildung', course],
+    ['Bausteine', l.modules.join(', ')],
     ['Anrede', l.salutation],
     ['Geburtstag', de(l.birthDate)],
     ['Geburtsort', l.birthPlace],
@@ -62,15 +69,15 @@ export async function submitLead(l: Lead): Promise<void> {
     ['Aufmerksam geworden durch', l.heardFrom],
   ]
   const details = lines.filter(([, v]) => v.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join('\n')
-  const msgBase = l.message.trim() || `Anfrage für: ${l.course}`
-  const message = `${msgBase}\n\n— Messe-Anfrage (${CAMPAIGN}) · ${l.category} → ${l.course}\n${details}`
+  const msgBase = l.message.trim() || `Anfrage für: ${course}`
+  const message = `${msgBase}\n\n— Messe-Anfrage (${CAMPAIGN})\n${details}`
   const phone = (l.mobile || l.phone).trim()
   const row = {
     name,
     email: l.email.trim(),
     phone: phone || null,
     message,
-    course_interest: l.course,
+    course_interest: course,
     location_preference: l.location || null,
     source: SOURCE,
     utm_source: SOURCE,
@@ -94,9 +101,9 @@ export async function submitLead(l: Lead): Promise<void> {
       name,
       email: row.email,
       phone: row.phone ?? undefined,
-      course: l.course,
+      course,
       location: row.location_preference ?? undefined,
-      message: message,
+      message,
       source: SOURCE,
     }, {}, 8000)
   } catch {

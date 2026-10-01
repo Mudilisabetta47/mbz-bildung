@@ -18,17 +18,24 @@ Datei `public/video/intro.mp4` (optional zusätzlich `intro.webm`) ablegen, comm
 8–15 Sek. Loop, unter 8 MB. Das Video startet stumm automatisch im Hero. Ohne Datei, bei Datensparmodus oder "Bewegung reduzieren" wird das Foto gezeigt.
 Komprimieren z. B.: `ffmpeg -i original.mov -vf scale=1280:-2 -an -c:v libx264 -crf 28 -preset slow -movflags +faststart public/video/intro.mp4`
 
+## Ablauf (Fragebogen)
+
+1. Bildungsträger oder Selbstzahler (bei Bildungsträger optional: Kostenträger)
+2. Ausbildung: LKW-Fahrer/in, Busfahrer/in, Fahrlehrer/in, City-Logistiker/in, Auslieferungsfahrer/in (Angebot laut Messe-Übersicht, `src/lib/offer.ts`)
+3. Nur LKW/Bus: Modular oder TQ, bei Modular die Bausteine
+4. Teilnehmerdaten, Kontakt, Absenden. Standort ist fest Hannover.
+
 ## Backend-Anbindung (bestehendes Supabase von metropol-bz.de)
 
-- Kurse: `GET /rest/v1/courses` (live, mit eingebautem Snapshot als Fallback) und `course_dates` für Termine.
 - Leads: `POST /rest/v1/contact_requests` mit `source = "messe"`, `utm_source = "messe"`, `utm_medium = "qr"`,
   `utm_campaign = "messe_2026"`, danach `send-contact-notification` (Mail), wie beim Kontaktformular der Hauptseite.
-- Zusatzfelder des Papierformulars (Anrede, Geburtstag, Geburtsort, Nationalität, Familienstand, Adresse, Telefon/Handy, "aufmerksam geworden durch")
-  haben in `contact_requests` keine eigenen Spalten und werden strukturiert in `message` übertragen.
-  Wenn dafür Spalten angelegt werden, nur `src/lib/lead.ts` anpassen.
+- Felder ohne eigene Spalte (Kostenträger, Ausbildung, Bausteine, Anrede, Geburtstag, Adresse usw.) stehen strukturiert in `message`.
+  Mit neuen Spalten nur `src/lib/lead.ts` anpassen.
 - Konfiguration über `.env` (siehe `.env.example`).
 
-## QR-Codes pro Kurs
+## QR-Codes pro Ausbildung
+
+`https://<domain>/?ausbildung=lkw` (weitere: `bus`, `fahrlehrer`, `citylogistik`, `auslieferung`) startet mit vorgewählter Ausbildung.
 
 `https://<domain>/?kurs=<slug>` öffnet direkt die Kursdetails, z. B. `?kurs=c-ce`, `?kurs=d-de`.
 

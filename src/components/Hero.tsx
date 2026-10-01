@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
-import { CATEGORIES, type CategoryId } from '../lib/catalog'
-import { Arrow, CatIcon, EASE, Pic } from './ui'
+import { Arrow, EASE, Pic } from './ui'
 
 const WORDS = ['Deine', 'Karriere', 'startet', 'hier.']
 
@@ -19,7 +18,7 @@ export function Header({ onCta }: { onCta: () => void }) {
         <img src="/img/logo.webp" width="295" height="70" alt="METROPOL Bildungszentrum" />
       </a>
       <button className="btn btn-primary" onClick={onCta}>
-        Beratung anfragen
+        Jetzt starten
       </button>
     </header>
   )
@@ -52,7 +51,7 @@ function HeroVideo() {
   )
 }
 
-export function Hero({ onExplore, onRequest, onQuick }: { onExplore: () => void; onRequest: () => void; onQuick: (id: CategoryId) => void }) {
+export function Hero({ onStart }: { onStart: () => void }) {
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '14%'])
@@ -85,39 +84,23 @@ export function Hero({ onExplore, onRequest, onQuick }: { onExplore: () => void;
           ))}
         </h1>
         <m.p className="hero-sub" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: EASE, delay: 0.75 }}>
-          LKW, Bus, Fahrlehrer, BKF: Finde deine Ausbildung und frag sie in einer Minute direkt an.
+          Beantworte ein paar kurze Fragen und starte direkt mit deiner Anfrage.
         </m.p>
         <m.div className="hero-cta" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: EASE, delay: 0.9 }}>
-          <button className="btn btn-primary" onClick={onExplore}>
-            Ausbildung entdecken <Arrow className="arr" />
+          <button className="btn btn-primary" onClick={onStart}>
+            Jetzt starten <Arrow className="arr" />
           </button>
-          <button className="btn btn-ghost" onClick={onRequest}>
-            Beratung anfragen
-          </button>
-        </m.div>
-        <m.div className="quick" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.05, duration: 0.8, ease: EASE }}>
-          <span>Direkt zu:</span>
-          {CATEGORIES.slice(0, 4).map((c) => (
-            <button key={c.id} onClick={() => onQuick(c.id)}><CatIcon id={c.id} />{c.name === 'BKF-Weiterbildung' ? 'BKF' : c.name}</button>
-          ))}
+          <a className="btn btn-ghost" href="tel:+495116425068">
+            Anrufen
+          </a>
         </m.div>
         <m.div className="chips" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 0.8 }}>
           <span className="chip">AZAV-zertifiziert</span>
           <span className="chip">Förderung möglich</span>
-          <span className="chip">Hannover · Bremen · Garbsen</span>
+          <span className="chip">Standort Hannover</span>
         </m.div>
       </m.div>
       <span className="scroll-hint" aria-hidden />
     </section>
-  )
-}
-
-const BAND = ['LKW', 'Bus', 'Fahrlehrer', 'BKF-Weiterbildung', 'Hannover', 'Bremen', 'Garbsen']
-export function Marquee() {
-  const row = BAND.map((t) => (<span key={t}>{t}<i aria-hidden>✦</i></span>))
-  return (
-    <div className="band" aria-hidden>
-      <div className="band-track">{row}{row}{row}{row}</div>
-    </div>
   )
 }
