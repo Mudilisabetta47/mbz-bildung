@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from 'framer-motion'
 import { TRACKS, type TrackId } from './lib/offer'
 import { track } from './lib/track'
 import { Header, Hero } from './components/Hero'
-import { LeadForm } from './components/LeadForm'
-import { Intro } from './components/Intro'
+import { CursorGlow, Marquee, ScrollProgress } from './components/Effects'
+import { initFx } from './lib/fx'
 import { sfx } from './lib/sfx'
 import { Pic, Reveal } from './components/ui'
+
+const LeadForm = lazy(() => import('./components/LeadForm').then((m) => ({ default: m.LeadForm })))
+const Intro = lazy(() => import('./components/Intro').then((m) => ({ default: m.Intro })))
 
 const PHONE = '0511 6425068'
 const TEL = 'tel:+495116425068'
@@ -43,6 +46,8 @@ export default function App() {
     if (scroll) setTimeout(() => scrollTo('anfrage'), 450)
   }, [])
 
+  useEffect(() => initFx(), [])
+
   // Dezente Klick-Sounds für Auswahl- und Navigationselemente
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -59,10 +64,13 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <LazyMotion features={domAnimation} strict={false}>
-        <AnimatePresence>{intro && <Intro onClose={closeIntro} />}</AnimatePresence>
+        <AnimatePresence>{intro && <Suspense fallback={null}><Intro onClose={closeIntro} /></Suspense>}</AnimatePresence>
+        <ScrollProgress />
+        <CursorGlow />
         <Header onCta={() => scrollTo('anfrage')} />
         <main>
           <Hero onStart={() => scrollTo('anfrage')} />
+          <Marquee />
           <section className="sec tint">
             <div className="wrap form-wrap">
               <Reveal className="form-side">
@@ -74,7 +82,7 @@ export default function App() {
                   <div><b>Regina Martin</b><span>Deine Ansprechpartnerin · <a href={TEL}>{PHONE}</a></span></div>
                 </div>
               </Reveal>
-              <LeadForm initialTrack={start} />
+              <Suspense fallback={<div className="form" id="anfrage" style={{ minHeight: 560 }} />}><LeadForm initialTrack={start} /></Suspense>
             </div>
           </section>
         </main>

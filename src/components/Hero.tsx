@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
 import { sfxEnabled, setSfx } from '../lib/sfx'
-import { Arrow, EASE, Pic } from './ui'
+import { HeroSparks } from './Effects'
+import { Arrow, EASE } from './ui'
 
 const WORDS = ['Deine', 'Karriere', 'startet', 'hier.']
 
@@ -50,8 +51,15 @@ export function Hero({ onStart }: { onStart: () => void }) {
   return (
     <section className="hero" ref={ref} id="top">
       <m.div className="hero-bg" style={{ y, scale }}>
-        <Pic name="hero" widths={[768, 1280, 1920]} sizes="(max-width: 700px) 230vw, 100vw" eager alt="METROPOL Flotte mit LKW, Bus und Fahrschulwagen" />
+        <picture>
+          <source media="(max-width: 700px)" type="image/avif" srcSet="/img/heroM-520.avif 520w, /img/heroM-700.avif 700w" sizes="100vw" />
+          <source media="(max-width: 700px)" type="image/webp" srcSet="/img/heroM-520.webp 520w, /img/heroM-700.webp 700w" sizes="100vw" />
+          <source type="image/avif" srcSet="/img/hero-768.avif 768w, /img/hero-1280.avif 1280w, /img/hero-1920.avif 1920w" sizes="100vw" />
+          <source type="image/webp" srcSet="/img/hero-768.webp 768w, /img/hero-1280.webp 1280w, /img/hero-1920.webp 1920w" sizes="100vw" />
+          <img src="/img/hero-1280.webp" width="1920" height="1080" alt="METROPOL Flotte mit LKW, Bus und Fahrschulwagen" fetchPriority="high" decoding="async" />
+        </picture>
       </m.div>
+      <HeroSparks />
       <m.div className="wrap hero-in" style={{ opacity: fade }}>
         <m.span className="kicker" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: EASE, delay: 0.1 }}>
           Messe 2026 · METROPOL

@@ -135,6 +135,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
       const id = await submitLead({ ...d, payMode: pay, payer: pay === 'Kostenübernahme' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
       setRequestId(id)
       sfx.success()
+      void import('../lib/confetti').then((c) => c.burst())
       track('lead_success', { course: tr.id, pay, request_id: id })
       setStatus('done')
       requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))

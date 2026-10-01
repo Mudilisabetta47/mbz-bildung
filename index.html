@@ -10,7 +10,8 @@
     <meta name="color-scheme" content="light" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
-    <link rel="preload" as="image" type="image/avif" href="/img/hero-768.avif" imagesrcset="/img/hero-768.avif 768w, /img/hero-1280.avif 1280w, /img/hero-1920.avif 1920w" imagesizes="(max-width: 700px) 230vw, 100vw" fetchpriority="high" />
+    <link rel="preload" as="image" type="image/avif" media="(max-width: 700px)" href="/img/heroM-520.avif" imagesrcset="/img/heroM-520.avif 520w, /img/heroM-700.avif 700w" imagesizes="100vw" fetchpriority="high" />
+    <link rel="preload" as="image" type="image/avif" media="(min-width: 701px)" href="/img/hero-768.avif" imagesrcset="/img/hero-768.avif 768w, /img/hero-1280.avif 1280w, /img/hero-1920.avif 1920w" imagesizes="100vw" fetchpriority="high" />
   </head>
   <body>
     <div id="root"></div>
