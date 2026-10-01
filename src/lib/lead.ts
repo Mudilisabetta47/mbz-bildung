@@ -1,112 +1,51 @@
 import { BACKEND } from './backend'
+import { buildRow, SOURCE, type Lead } from '../../shared/leadRow'
 
-export interface Lead {
-  payMode: string
-  payer: string
-  track: string
-  path: string
-  modules: string[]
-  salutation: string
-  firstName: string
-  lastName: string
-  birthDate: string
-  birthPlace: string
-  nationality: string
-  maritalStatus: string
-  street: string
-  zip: string
-  city: string
-  phone: string
-  mobile: string
-  email: string
-  heardFrom: string
-  location: string
-  message: string
-}
+export type { Lead }
 
 const CAMPAIGN = (import.meta.env.VITE_CAMPAIGN as string) || 'messe_2026'
-const SOURCE = 'messe'
 
-const headers = {
-  apikey: BACKEND.key,
-  Authorization: `Bearer ${BACKEND.key}`,
-  'Content-Type': 'application/json',
-}
-
-async function post(url: string, body: unknown, extra: Record<string, string> = {}, ms = 15000) {
+async function post(url: string, body: unknown, headers: Record<string, string>, ms = 15000) {
   const ctrl = new AbortController()
   const t = setTimeout(() => ctrl.abort(), ms)
   try {
-    return await fetch(url, { method: 'POST', headers: { ...headers, ...extra }, body: JSON.stringify(body), signal: ctrl.signal })
+    return await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: ctrl.signal })
   } finally {
     clearTimeout(t)
   }
 }
 
-/**
- * Überträgt die Anfrage in dieselbe Tabelle (`contact_requests`) wie das Kontaktformular von metropol-bz.de,
- * damit sie im Admin-System unter "Kontakte" erscheint. `source`/`utm_*` kennzeichnen die Messe.
- * Fragebogen- und Formularfelder ohne eigene Spalte stehen strukturiert in `message`.
- * Danach wird wie auf der Hauptseite die Benachrichtigungs-Mail ausgelöst (Fehler dort sind nicht kritisch).
- */
-export async function submitLead(l: Lead): Promise<void> {
-  const name = `${l.firstName.trim()} ${l.lastName.trim()}`
-  const de = (d: string) => (d ? d.split('-').reverse().join('.') : '')
-  const course = l.path ? `${l.track} (${l.path})` : l.track
-  const lines: [string, string][] = [
-    ['Kostenträger', l.payMode + (l.payer ? ` (${l.payer})` : '')],
-    ['Ausbildung', course],
-    ['Bausteine', l.modules.join(', ')],
-    ['Anrede', l.salutation],
-    ['Geburtstag', de(l.birthDate)],
-    ['Geburtsort', l.birthPlace],
-    ['Nationalität', l.nationality],
-    ['Familienstand', l.maritalStatus],
-    ['Straße, Hausnummer', l.street],
-    ['PLZ, Ort', [l.zip, l.city].filter(Boolean).join(' ')],
-    ['Telefon', l.phone],
-    ['Handy', l.mobile],
-    ['Aufmerksam geworden durch', l.heardFrom],
-  ]
-  const details = lines.filter(([, v]) => v.trim()).map(([k, v]) => `${k}: ${v.trim()}`).join('\n')
-  const msgBase = l.message.trim() || `Anfrage für: ${course}`
-  const message = `${msgBase}\n\n— Messe-Anfrage (${CAMPAIGN})\n${details}`
-  const phone = (l.mobile || l.phone).trim()
-  const row = {
-    name,
-    email: l.email.trim(),
-    phone: phone || null,
-    message,
-    course_interest: course,
-    location_preference: l.location || null,
-    source: SOURCE,
-    utm_source: SOURCE,
-    utm_medium: 'qr',
-    utm_campaign: CAMPAIGN,
-  }
-
+/** Direkt-Weg wie das Kontaktformular von metropol-bz.de (lokale Entwicklung bzw. falls /api/lead nicht erreichbar ist). */
+async function direct(l: Lead) {
+  const { row, name, course, message } = buildRow(l, CAMPAIGN)
+  const h = { apikey: BACKEND.key, Authorization: `Bearer ${BACKEND.key}` }
   let res: Response | undefined
   for (let attempt = 0; attempt < 2 && !res?.ok; attempt++) {
     try {
-      res = await post(`${BACKEND.url}/rest/v1/contact_requests`, row, { Prefer: 'return=minimal' })
-      if (res.status >= 400 && res.status < 500) break // Retry nur bei Netz-/5xx-Fehlern
-    } catch {
-      /* Netzfehler → zweiter Versuch */
-    }
+      res = await post(`${BACKEND.url}/rest/v1/contact_requests`, row, { ...h, Prefer: 'return=minimal' })
+      if (res.status >= 400 && res.status < 500) break
+    } catch { /* Netzfehler → zweiter Versuch */ }
   }
   if (!res || !res.ok) throw new Error(`lead_insert_failed:${res?.status ?? 'network'}`)
-
   try {
-    await post(`${BACKEND.url}/functions/v1/send-contact-notification`, {
-      name,
-      email: row.email,
-      phone: row.phone ?? undefined,
-      course,
-      location: row.location_preference ?? undefined,
-      message,
-      source: SOURCE,
-    }, {}, 8000)
+    await post(`${BACKEND.url}/functions/v1/send-contact-notification`, { name, email: row.email, phone: row.phone ?? undefined, course, location: row.location_preference ?? undefined, message, source: SOURCE }, h, 8000)
+  } catch { /* Lead ist gespeichert */ }
+}
+
+/**
+ * Sendet die Anfrage an den eigenen Endpunkt `/api/lead` (Worker): speichert in `contact_requests`
+ * (source = "messe", utm_campaign = "messe_2026") und verschickt die Mails (Resend, sonst bestehende Funktion).
+ */
+export async function submitLead(l: Lead): Promise<void> {
+  let res: Response | undefined
+  try {
+    res = await post('/api/lead', l, {})
   } catch {
-    /* Lead ist gespeichert; Mail-Benachrichtigung ist Zusatz */
+    res = undefined
   }
+  if (res?.ok) return
+  if (res && res.status !== 404 && res.status < 500) throw new Error(`lead_rejected:${res.status}`)
+  if (res?.status === 502) throw new Error('lead_insert_failed:502')
+  // Endpunkt nicht vorhanden (Dev) oder nicht erreichbar → direkter Weg
+  return direct(l)
 }

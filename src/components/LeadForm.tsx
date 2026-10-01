@@ -8,12 +8,11 @@ import { Arrow, EASE, Pic, Tick, TrackIcon } from './ui'
 const PHONE = '0511 6425068'
 const TEL = 'tel:+495116425068'
 
-type StepId = 'pay' | 'track' | 'path' | 'person' | 'contact' | 'send'
+type StepId = 'track' | 'path' | 'person' | 'contact' | 'send'
 const TITLES: Record<StepId, string> = {
-  pay: 'Bildungsträger oder Selbstzahler?',
-  track: 'Was möchtest du werden?',
+  track: 'Woran hast du Interesse?',
   path: 'Wie möchtest du starten?',
-  person: 'Erzähl uns kurz von dir.',
+  person: 'Deine Daten',
   contact: 'Wie erreichen wir dich?',
   send: 'Alles richtig? Dann ab damit.',
 }
@@ -37,7 +36,7 @@ const phoneOk = (v: string) => v.replace(/\D/g, '').length >= 6
 export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
   const [stepIdx, setStepIdx] = useState(0)
   const [dir, setDir] = useState(1)
-  const [pay, setPay] = useState<'' | 'Bildungsträger' | 'Selbstzahler'>('')
+  const [pay, setPay] = useState<'' | 'Selbstzahler' | 'Kostenübernahme'>('')
   const [trackId, setTrackId] = useState<TrackId | ''>(initialTrack ?? '')
   const [pathId, setPathId] = useState<'' | 'modular' | 'tq'>('')
   const [modules, setModules] = useState<string[]>([])
@@ -51,7 +50,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
   const root = useRef<HTMLDivElement>(null)
 
   const tr: Track | undefined = TRACKS.find((t) => t.id === trackId)
-  const steps: StepId[] = ['pay', 'track', ...(tr?.paths ? (['path'] as StepId[]) : []), 'person', 'contact', 'send']
+  const steps: StepId[] = ['track', ...(tr?.paths ? (['path'] as StepId[]) : []), 'person', 'contact', 'send']
   const step = steps[Math.min(stepIdx, steps.length - 1)]
   const path = tr?.paths?.find((p) => p.id === pathId)
 
@@ -67,8 +66,6 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
 
   const validate = (): Errors => {
     const e: Errors = {}
-    if (step === 'pay' && !pay) e.pay = 'Bitte wähle eine Option.'
-    if (step === 'pay' && pay === 'Bildungsträger' && d.payer.trim().length < 2) e.payer = 'Bitte trage deinen Kostenträger ein.'
     if (step === 'track' && !tr) e.track = 'Bitte wähle eine Ausbildung.'
     if (step === 'path') {
       if (!pathId) e.path = 'Bitte wähle, wie du starten möchtest.'
@@ -77,6 +74,8 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     if (step === 'person') {
       if (d.firstName.trim().length < 2) e.firstName = 'Bitte gib deinen Vornamen ein.'
       if (d.lastName.trim().length < 2) e.lastName = 'Bitte gib deinen Nachnamen ein.'
+      if (!pay) e.pay = 'Bitte wähle Selbstzahler oder Kostenübernahme.'
+      else if (pay === 'Kostenübernahme' && d.payer.trim().length < 2) e.payer = 'Bitte trage ein, wer die Kosten übernimmt.'
       if (d.birthDate) {
         const t = new Date(d.birthDate).getTime()
         if (!(t > new Date('1920-01-01').getTime() && t < Date.now())) e.birthDate = 'Bitte prüfe das Geburtsdatum.'
@@ -128,7 +127,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     setStatus('sending')
     track('lead_submitted', { course: tr.id, pay })
     try {
-      await submitLead({ ...d, payMode: pay, payer: pay === 'Bildungsträger' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
+      await submitLead({ ...d, payMode: pay, payer: pay === 'Kostenübernahme' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
       track('lead_success', { course: tr.id, pay })
       setStatus('done')
       requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -211,25 +210,6 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
           <span className="step-no">{String(stepIdx + 1).padStart(2, '0')}</span>
           <h3 className="q">{TITLES[step]}</h3>
 
-          {step === 'pay' && (
-            <div>
-              <div className="choice-grid" role="radiogroup" aria-label="Kostenträger">
-                <button role="radio" aria-checked={pay === 'Bildungsträger'} className="choice" onClick={() => { setPay('Bildungsträger'); setErrors({}) }}>
-                  <b>Bildungsträger</b><small>Die Kosten übernimmt ein Träger</small>
-                </button>
-                <button role="radio" aria-checked={pay === 'Selbstzahler'} className="choice" onClick={() => { setPay('Selbstzahler'); set('payer', ''); setErrors({}); auto(() => undefined) }}>
-                  <b>Selbstzahler</b><small>Du bezahlst deine Ausbildung selbst</small>
-                </button>
-              </div>
-              {pay === 'Bildungsträger' && (
-                <m.div className="fields" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE }} style={{ marginTop: 18 }}>
-                  {field('payer', 'Dein Kostenträger', { autoComplete: 'off', autoCapitalize: 'words', enterKeyHint: 'next', placeholder: 'Bitte selbst eintragen', autoFocus: true })}
-                </m.div>
-              )}
-              {errors.pay && <p className="err" role="alert">{errors.pay}</p>}
-            </div>
-          )}
-
           {step === 'track' && (
             <div>
               <div className="tracks" role="radiogroup" aria-label="Ausbildung">
@@ -299,6 +279,23 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
                   </select>
                 </div>
               </div>
+              <div className="field kosten">
+                <label id="pay-l">Kostenpunkt</label>
+                <div className="choice-grid" role="radiogroup" aria-labelledby="pay-l">
+                  <button role="radio" aria-checked={pay === 'Selbstzahler'} aria-invalid={!!errors.pay} className="choice" onClick={() => { setPay('Selbstzahler'); set('payer', ''); setErrors((p) => ({ ...p, pay: undefined, payer: undefined })) }}>
+                    <b>Selbstzahler</b><small>Ich bezahle selbst</small>
+                  </button>
+                  <button role="radio" aria-checked={pay === 'Kostenübernahme'} aria-invalid={!!errors.pay} className="choice" onClick={() => { setPay('Kostenübernahme'); setErrors((p) => ({ ...p, pay: undefined })) }}>
+                    <b>Kostenübernahme</b><small>Ein Kostenträger übernimmt die Kosten</small>
+                  </button>
+                </div>
+                {errors.pay && <p className="err" role="alert">{errors.pay}</p>}
+                {pay === 'Kostenübernahme' && (
+                  <m.div className="fields" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE }} style={{ marginTop: 14 }}>
+                    {field('payer', 'Kostenträger', { autoComplete: 'off', autoCapitalize: 'words', placeholder: 'Bitte selbst eintragen' })}
+                  </m.div>
+                )}
+              </div>
             </div>
           )}
 
@@ -326,7 +323,7 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
           {step === 'send' && (
             <div>
               <dl className="summary">
-                <div><dt>Bezahlung</dt><dd>{pay}{pay === 'Bildungsträger' && d.payer ? ` · ${d.payer}` : ''}</dd></div>
+                <div><dt>Kostenpunkt</dt><dd>{pay}{pay === 'Kostenübernahme' && d.payer ? ` · ${d.payer}` : ''}</dd></div>
                 <div><dt>Ausbildung</dt><dd>{label}{pathLabel ? ` · ${pathLabel}` : ''}</dd></div>
                 {modules.length > 0 && <div><dt>Bausteine</dt><dd>{modules.join(', ')}</dd></div>}
                 <div><dt>Name</dt><dd>{[d.salutation, d.firstName, d.lastName].filter(Boolean).join(' ')}</dd></div>

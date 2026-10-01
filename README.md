@@ -20,10 +20,9 @@ Komprimieren z. B.: `ffmpeg -i original.mov -vf scale=1280:-2 -an -c:v libx264 -
 
 ## Ablauf (Fragebogen)
 
-1. Bildungsträger oder Selbstzahler (bei Bildungsträger optional: Kostenträger)
-2. Ausbildung: LKW-Fahrer/in, Busfahrer/in, Fahrlehrer/in, City-Logistiker/in, Auslieferungsfahrer/in (Angebot laut Messe-Übersicht, `src/lib/offer.ts`)
-3. Nur LKW/Bus: Modular oder TQ, bei Modular die Bausteine
-4. Teilnehmerdaten, Kontakt, Absenden. Standort ist fest Hannover.
+1. Woran hast du Interesse? Ausbildung: LKW-Fahrer/in, Busfahrer/in, Fahrlehrer/in, City-Logistiker/in, Auslieferungsfahrer/in (Angebot laut Messe-Übersicht, `src/lib/offer.ts`)
+2. Nur LKW/Bus: Modular oder TQ, bei Modular die Bausteine
+3. Deine Daten inkl. Kostenpunkt (Selbstzahler oder Kostenübernahme mit selbst eingetragenem Kostenträger), Kontakt, Absenden. Standort ist fest Hannover.
 
 ## Backend-Anbindung (bestehendes Supabase von metropol-bz.de)
 
