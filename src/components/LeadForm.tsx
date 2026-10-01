@@ -3,6 +3,7 @@ import { AnimatePresence, m } from 'framer-motion'
 import { TRACKS, type Track, type TrackId } from '../lib/offer'
 import { submitLead } from '../lib/lead'
 import { track } from '../lib/track'
+import { sfx } from '../lib/sfx'
 import { Arrow, EASE, Pic, Tick, TrackIcon } from './ui'
 
 const PHONE = '0511 6425068'
@@ -133,12 +134,14 @@ export function LeadForm({ initialTrack }: { initialTrack: TrackId | null }) {
     try {
       const id = await submitLead({ ...d, payMode: pay, payer: pay === 'Kostenübernahme' ? d.payer : '', track: tr.name, path: pathLabel, modules, location: 'Hannover' })
       setRequestId(id)
+      sfx.success()
       track('lead_success', { course: tr.id, pay, request_id: id })
       setStatus('done')
       requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
     } catch (err) {
       sent.current = false
       track('lead_error', { reason: String((err as Error).message).slice(0, 60) })
+      sfx.error()
       setStatus('error')
     }
   }

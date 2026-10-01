@@ -323,3 +323,50 @@ noscript { display: block; padding: 24px; text-align: center; }
 
 .rid { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,204,54,.3); color: var(--text); }
 .rid strong { letter-spacing: .06em; font-size: 1.05rem; color: var(--accent-d); }
+
+/* ---- Intro im Studiolicht ---- */
+.hdr-r { display: flex; align-items: center; gap: 10px; }
+.sfx { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: background .25s, transform .3s var(--ease); }
+.sfx:hover { transform: scale(1.06); }
+.sfx[aria-pressed='false'] { opacity: .75; }
+.hdr.solid .sfx { background: var(--bg2); border-color: var(--line); color: var(--text); }
+
+.intro { position: fixed; inset: 0; z-index: 200; background: #040705; overflow: hidden; display: grid; place-items: center; color: #fff; }
+.intro-bg { position: absolute; inset: -8%; background: url('/video/poster.webp') center/cover; filter: blur(46px) brightness(.28) saturate(1.3); transform: scale(1.1); }
+.intro-light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; animation: lampOn 1.6s steps(1, end) both, breathe 7s ease-in-out 1.6s infinite; }
+.intro-light .cone { position: absolute; top: -12%; width: 70%; height: 125%; filter: blur(26px); opacity: .9; }
+.intro-light .cone.l { left: -14%; background: conic-gradient(from 160deg at 50% 0%, transparent 0deg, rgba(220,255,232,.26) 14deg, rgba(220,255,232,.04) 30deg, transparent 38deg); transform-origin: 50% 0; animation: sweepL 9s ease-in-out infinite; }
+.intro-light .cone.r { right: -14%; background: conic-gradient(from 162deg at 50% 0%, transparent 0deg, rgba(190,255,215,.2) 12deg, rgba(190,255,215,.03) 28deg, transparent 36deg); transform-origin: 50% 0; transform: scaleX(-1); animation: sweepR 11s ease-in-out infinite; }
+.intro-light .pool { position: absolute; left: 50%; bottom: 4%; width: 90%; max-width: 760px; aspect-ratio: 3 / 1; translate: -50% 0; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,204,54,.45), rgba(0,204,54,.08) 60%, transparent); filter: blur(30px); }
+@keyframes lampOn { 0% { opacity: 0; } 8% { opacity: .85; } 12% { opacity: .1; } 20% { opacity: .95; } 26% { opacity: .25; } 34% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .78; } }
+@keyframes sweepL { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg); } }
+@keyframes sweepR { 0%,100% { transform: scaleX(-1) rotate(5deg); } 50% { transform: scaleX(-1) rotate(-4deg); } }
+
+.intro-stage { position: absolute; inset: 0; overflow: hidden; background: #0a0f0b; }
+.intro-poster, .intro-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
+.intro-video { opacity: 0; transition: opacity .6s var(--ease); }
+.intro-video.on { opacity: 1; }
+.intro-vig { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(4,7,5,.55) 0%, transparent 22%, transparent 55%, rgba(4,7,5,.92) 100%), radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(4,7,5,.55) 100%); }
+.intro-prog { position: absolute; left: 14px; right: 14px; top: calc(env(safe-area-inset-top) + 14px); height: 3px; border-radius: 2px; background: rgba(255,255,255,.28); overflow: hidden; z-index: 2; }
+.intro-prog i { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform .25s linear; }
+.intro-play { position: absolute; inset: 0; margin: auto; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.5); color: #fff; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 3; }
+.intro-skip { position: absolute; z-index: 5; right: 14px; top: calc(env(safe-area-inset-top) + 26px); min-height: 40px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.32); color: #fff; font-weight: 600; font-size: .85rem; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.intro-ui { position: absolute; z-index: 5; left: var(--pad); right: var(--pad); bottom: calc(22px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: stretch; gap: 12px; max-width: 520px; margin: 0 auto; }
+.intro-sound { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 18px 0 14px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); color: #fff; font-weight: 700; font-size: .92rem; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: transform .3s var(--ease), background .25s; }
+.intro-sound svg { color: #7dff9b; }
+.intro-sound:hover { background: rgba(255,255,255,.26); transform: translateY(-2px); }
+.intro-go { width: 100%; min-height: 60px; font-size: 1.1rem; }
+.intro-go .arr.down { transform: rotate(90deg); animation: bob 1.8s var(--ease) infinite; }
+.intro-go.hot { animation: glow 1.8s ease-in-out infinite; }
+@keyframes bob { 0%,100% { translate: 0 0; } 50% { translate: 5px 0; } }
+@keyframes glow { 0%,100% { box-shadow: 0 16px 40px -14px rgba(0,204,54,.8), 0 0 0 0 rgba(0,204,54,.6); } 50% { box-shadow: 0 16px 40px -14px rgba(0,204,54,.8), 0 0 0 18px rgba(0,204,54,0); } }
+
+/* Desktop: Hochformat-Video als Bühne in der Mitte */
+@media (min-width: 900px) {
+  .intro-stage { inset: auto; position: relative; height: min(88vh, 860px); aspect-ratio: 9 / 16; border-radius: 30px; box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 40px 120px -20px rgba(0,204,54,.35), 0 30px 80px rgba(0,0,0,.7); }
+  .intro-ui { left: 50%; right: auto; width: min(88vh * 9 / 16, 484px); translate: -50% 0; bottom: calc(50% - min(88vh, 860px) / 2 + 22px); }
+  .intro-prog { top: 20px; left: 22px; right: 22px; }
+  .intro-skip { top: 28px; right: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .intro-light, .intro-light .cone, .intro-go .arr.down, .intro-go.hot { animation: none !important; } }

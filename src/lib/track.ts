@@ -44,6 +44,7 @@ export type EventName =
   | 'lead_submitted'
   | 'lead_success'
   | 'lead_error'
+  | 'intro_closed'
 
 const base = { source: 'messe', campaign: import.meta.env.VITE_CAMPAIGN || 'messe_2026' }
 

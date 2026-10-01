@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
-import { LazyMotion, MotionConfig, domAnimation } from 'framer-motion'
+import { useCallback, useEffect, useState } from 'react'
+import { AnimatePresence, LazyMotion, MotionConfig, domAnimation } from 'framer-motion'
 import { TRACKS, type TrackId } from './lib/offer'
 import { track } from './lib/track'
 import { Header, Hero } from './components/Hero'
 import { LeadForm } from './components/LeadForm'
+import { Intro } from './components/Intro'
+import { sfx } from './lib/sfx'
 import { Pic, Reveal } from './components/ui'
 
 const PHONE = '0511 6425068'
@@ -17,13 +19,47 @@ function initialTrack(): TrackId | null {
   return (TRACKS.find((t) => t.id === v)?.id as TrackId) ?? null
 }
 
+/** Intro nur einmal pro Sitzung, nicht bei "Bewegung reduzieren", Datensparmodus oder ?intro=0 */
+function shouldShowIntro(): boolean {
+  try {
+    const nav = navigator as Navigator & { connection?: { saveData?: boolean } }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || nav.connection?.saveData) return false
+    const q = new URLSearchParams(window.location.search).get('intro')
+    if (q === '0') return false
+    if (q === '1') return true
+    return sessionStorage.getItem('mbz_intro') !== 'seen'
+  } catch { return true }
+}
+
 export default function App() {
   const [start] = useState(initialTrack)
+  const [intro, setIntro] = useState(shouldShowIntro)
   useEffect(() => { track('page_view', { page: 'messe_home' }) }, [])
+
+  const closeIntro = useCallback((scroll: boolean) => {
+    try { sessionStorage.setItem('mbz_intro', 'seen') } catch { /* ignorieren */ }
+    track('intro_closed', { scrolled: scroll })
+    setIntro(false)
+    if (scroll) setTimeout(() => scrollTo('anfrage'), 450)
+  }, [])
+
+  // Dezente Klick-Sounds für Auswahl- und Navigationselemente
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null
+      if (!t || t.closest('.intro')) return
+      if (t.closest('[role=radio], .pill, .choice, .trk')) sfx.select()
+      else if (t.closest('.back')) sfx.back()
+      else if (t.closest('.btn-primary')) sfx.next()
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [])
 
   return (
     <MotionConfig reducedMotion="user">
       <LazyMotion features={domAnimation} strict={false}>
+        <AnimatePresence>{intro && <Intro onClose={closeIntro} />}</AnimatePresence>
         <Header onCta={() => scrollTo('anfrage')} />
         <main>
           <Hero onStart={() => scrollTo('anfrage')} />

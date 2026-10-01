@@ -12,11 +12,12 @@ npm run build      # erzeugt dist/ (statisch, überall hostbar)
 npm run images     # erzeugt AVIF/WebP aus assets-src/ neu
 ```
 
-## Intro-Video
+## Intro-Video und Töne
 
-Datei `public/video/intro.mp4` (optional zusätzlich `intro.webm`) ablegen, committen, deployen. Empfehlung: H.264, 1080p/720p,
-8–15 Sek. Loop, unter 8 MB. Das Video startet stumm automatisch im Hero. Ohne Datei, bei Datensparmodus oder "Bewegung reduzieren" wird das Foto gezeigt.
-Komprimieren z. B.: `ffmpeg -i original.mov -vf scale=1280:-2 -an -c:v libx264 -crf 28 -preset slow -movflags +faststart public/video/intro.mp4`
+Beim ersten Öffnen läuft ein Begrüßungs-Intro im Studiolicht (`src/components/Intro.tsx`): stumm automatisch, Ton auf Tipp,
+Button "Jetzt starten" bringt direkt zum Fragebogen. Dateien in `public/video/` (siehe dort), Erzeugung aus dem iPhone-Original per `scripts/video.sh`
+(braucht ffmpeg). `?intro=1` erzwingt das Intro, `?intro=0` überspringt es. Bei "Bewegung reduzieren" und Datensparmodus entfällt es.
+UI-Töne (`src/lib/sfx.ts`) werden per Web Audio erzeugt, sind leise und über den Lautsprecher-Knopf im Header abschaltbar.
 
 ## Ablauf (Fragebogen)
 

@@ -1,8 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
+import { sfxEnabled, setSfx } from '../lib/sfx'
 import { Arrow, EASE, Pic } from './ui'
 
 const WORDS = ['Deine', 'Karriere', 'startet', 'hier.']
+
+function SfxToggle() {
+  const [on, setOn] = useState(sfxEnabled)
+  return (
+    <button className="sfx" aria-pressed={on} aria-label={on ? 'Töne ausschalten' : 'Töne einschalten'} onClick={() => { const n = !on; setOn(n); setSfx(n) }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M11 5 6 9H3v6h3l5 4z" />
+        {on ? <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" /> : <path d="M22 9l-6 6M16 9l6 6" />}
+      </svg>
+    </button>
+  )
+}
 
 export function Header({ onCta }: { onCta: () => void }) {
   const [solid, setSolid] = useState(false)
@@ -17,37 +30,13 @@ export function Header({ onCta }: { onCta: () => void }) {
       <a className="logo" href="#top" aria-label="METROPOL Bildungszentrum">
         <img src="/img/logo.webp" width="295" height="70" alt="METROPOL Bildungszentrum" />
       </a>
-      <button className="btn btn-primary" onClick={onCta}>
-        Jetzt starten
-      </button>
+      <div className="hdr-r">
+        <SfxToggle />
+        <button className="btn btn-primary" onClick={onCta}>
+          Jetzt starten
+        </button>
+      </div>
     </header>
-  )
-}
-
-/** Intro-Video aus /video/intro.mp4 – nur wenn vorhanden, Daten-Sparmodus und "Bewegung reduzieren" aus. */
-function HeroVideo() {
-  const [ok, setOk] = useState(() => {
-    if (typeof window === 'undefined') return false
-    const nav = navigator as Navigator & { connection?: { saveData?: boolean } }
-    return !window.matchMedia('(prefers-reduced-motion: reduce)').matches && !nav.connection?.saveData
-  })
-  const [ready, setReady] = useState(false)
-  if (!ok) return null
-  return (
-    <video
-      className={`hero-video ${ready ? 'on' : ''}`}
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="auto"
-      poster="/img/hero-1280.webp"
-      onCanPlay={() => setReady(true)}
-      onError={() => setOk(false)}
-    >
-      <source src="/video/intro.webm" type="video/webm" onError={() => undefined} />
-      <source src="/video/intro.mp4" type="video/mp4" onError={() => setOk(false)} />
-    </video>
   )
 }
 
@@ -62,7 +51,6 @@ export function Hero({ onStart }: { onStart: () => void }) {
     <section className="hero" ref={ref} id="top">
       <m.div className="hero-bg" style={{ y, scale }}>
         <Pic name="hero" widths={[768, 1280, 1920]} sizes="(max-width: 700px) 230vw, 100vw" eager alt="METROPOL Flotte mit LKW, Bus und Fahrschulwagen" />
-        <HeroVideo />
       </m.div>
       <m.div className="wrap hero-in" style={{ opacity: fade }}>
         <m.span className="kicker" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease: EASE, delay: 0.1 }}>
